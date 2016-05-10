@@ -1,4 +1,26 @@
-package xymemmory
+//The MIT License (MIT)
+//
+//Copyright (c) 2016 Xustyx
+//
+//Permission is hereby granted, free of charge, to any person obtaining a copy
+//of this software and associated documentation files (the "Software"), to deal
+//in the Software without restriction, including without limitation the rights
+//to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//copies of the Software, and to permit persons to whom the Software is
+//furnished to do so, subject to the following conditions:
+//
+//The above copyright notice and this permission notice shall be included in all
+//copies or substantial portions of the Software.
+//
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//SOFTWARE.
+
+package goxymemmory
 
 import (
 	"unsafe"
@@ -7,18 +29,25 @@ import (
 	"github.com/Xustyx/w32"
 )
 
+//Exception type of ProcessHandler.
 type ProcessException error
 
+//Type of simple process.
 type Process struct {
 	Name string
 	Pid uint32
 }
 
+//This type handles the process.
 type processHandler struct {
 	process *Process
 	hProcess uintptr
 }
 
+//Constructor of ProcessHandler
+//Param	  (processName)	   : The name of process to handle.
+//Returns (*processHandler): A processHandler object.
+//Errors  (err)		   : Error if don't exist process with passed name.
 func ProcessHandler(processName string) (hProcess *processHandler, err ProcessException)  {
 	_hProcess := processHandler{}
 	_hProcess.process, err = processFromName(processName)
@@ -26,6 +55,7 @@ func ProcessHandler(processName string) (hProcess *processHandler, err ProcessEx
 	return &_hProcess, err
 }
 
+//This function returns a list of process.
 func list() (processes []*Process) {
 	processes = make([]*Process,0)
 
@@ -39,7 +69,7 @@ func list() (processes []*Process) {
 	PROCESSENTRY32_SIZE := unsafe.Sizeof(pEntry)
 	pEntry.Size = uint32(PROCESSENTRY32_SIZE)
 
-	_err := w32.Process32First(handle, &pEntry)
+	_err := w32.Process32First(handle, &pEntry) //Read frist element.
 	if _err == nil {
 		for {
 			name := w32.UTF16PtrToString(&pEntry.ExeFile[0])
@@ -48,7 +78,7 @@ func list() (processes []*Process) {
 			if _err != nil {
 				break
 			}
-		}
+		} //Loops until reach last process.
 	} else {
 		fmt.Printf("Warning, Process32First failed. Error: ", _err)
 	}
@@ -58,6 +88,7 @@ func list() (processes []*Process) {
 	return
 }
 
+//This function search a process with passed name in list() and returns it.
 func processFromName(processName string) ( *Process, ProcessException) {
 	for _,process := range list() {
 		if process.Name == processName {
@@ -69,6 +100,9 @@ func processFromName(processName string) ( *Process, ProcessException) {
 	return nil, err
 }
 
+//Open the process of ProcessHandler in get self debug privileges.
+//Public method of (processHandler) class.
+//Errors (err): Error if don't exist process or cannot open with PAA.
 func (ph *processHandler) Open() (err ProcessException) {
 
 	if ph.process == nil {
@@ -88,6 +122,7 @@ func (ph *processHandler) Open() (err ProcessException) {
 	return
 }
 
+//This function try to set self process with debug privileges.
 func setDebugPrivilege() bool {
 	pseudoHandle, _err := w32.GetCurrentProcess()
 	if _err != nil {
@@ -104,6 +139,7 @@ func setDebugPrivilege() bool {
 	return setPrivilege(hToken, w32.SE_DEBUG_NAME, true)
 }
 
+//This function try to set privileges to a process.
 func setPrivilege (hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool) bool {
 	tPrivs := w32.TOKEN_PRIVILEGES{}
 	TOKEN_PRIVILEGES_SIZE := uint32(unsafe.Sizeof(tPrivs))
@@ -131,6 +167,12 @@ func setPrivilege (hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege boo
 	return true
 }
 
+//Low level facade to Read memory.
+//Public method of (processHandler) class.
+//Param	  (address): The process memory addres in hexadecimal. EX: (0X0057F0F0).
+//Param   (size)   : The size of bytes that we want to read.
+//Returns (data)   : A byte array with data.
+//Errors  (err)	   : This will be not nil if handle is not opened or cannot read the memory.
 func (ph *processHandler) ReadBytes(address uint, size uint) (data []byte, err ProcessException) {
 	if ph.hProcess == 0 {
 		err = errors.New("No process handle.")
@@ -144,6 +186,11 @@ func (ph *processHandler) ReadBytes(address uint, size uint) (data []byte, err P
 	return
 }
 
+//Low level facade to Write memory.
+//Public method of (processHandler) class.
+//Param	  (address): The process memory addres in hexadecimal. EX: (0X0057F0F0).
+//Param   (data)   : A byte array with data.
+//Errors  (err)	   : This will be not nil if handle is not opened or cannot write the memory.
 func (ph *processHandler) WriteBytes(address uint, data []byte) (err ProcessException) {
 	if ph.hProcess == 0 {
 		err = errors.New("No process handle.")
