@@ -21,20 +21,20 @@
 //SOFTWARE.
 
 //This package implements functions to reads and writes process memory more easily.
+//
 //Remember to execute with administrator privileges to grant debug on other process.
 package goxymemmory
 
 import (
-	"fmt"
-	"errors"
 	"encoding/binary"
+	"errors"
+	"fmt"
 )
 
 //Type of the data.
 type DataType int
 
 //Enum of data types.
-//Extend this to add new types.
 const (
 	UINT DataType = iota
 	INT
@@ -43,8 +43,7 @@ const (
 )
 
 //String representation of data types.
-//Extend this to add new types.
-var data_types = [...]string {
+var data_types = [...]string{
 	"uint",
 	"int",
 	"byte",
@@ -61,15 +60,15 @@ type DataException error
 
 //This type warp the read and write values.
 type Data struct {
-	Value interface{} 	//Any type value.
-	DataType DataType 	//Unwarp value.
+	Value    interface{} //Any type value.
+	DataType DataType    //Unwarp value.
 }
 
 //This type is the Facade for read and write.
 type dataManager struct {
-	ProcessName string 	//Name of the process.
-	process *processHandler //This handles the low level facade.
-	IsOpen bool		//True if we are in process.
+	ProcessName string          //Name of the process.
+	process     *processHandler //This handles the low level facade.
+	IsOpen      bool            //True if we are in process.
 }
 
 //Constructor of DataManager
@@ -112,16 +111,16 @@ func (dm *dataManager) Read(address uint, dataType DataType) (data Data, err Dat
 	}
 
 	switch dataType {
-		case UINT:
-			data, _err = dm.readUint(address)
-		case INT:
-			data, _err = dm.readInt(address)
-		case BYTE:
-			data, _err = dm.readByte(address)
-		case STRING:
-			data, _err = dm.readString(address)
-		default:
-			err = errors.New("Invalid data type.")
+	case UINT:
+		data, _err = dm.readUint(address)
+	case INT:
+		data, _err = dm.readInt(address)
+	case BYTE:
+		data, _err = dm.readByte(address)
+	case STRING:
+		data, _err = dm.readString(address)
+	default:
+		err = errors.New("Invalid data type.")
 	}
 
 	if _err != nil {
@@ -144,17 +143,17 @@ func (dm *dataManager) readByte(address uint) (data Data, err ProcessException) 
 func (dm *dataManager) readString(address uint) (data Data, err ProcessException) {
 	data.DataType = STRING
 
-	 wordBytes := make([]byte, 0)
+	wordBytes := make([]byte, 0)
 	_address := address
 
 	for {
 		_data, _err := dm.readByte(_address)
-		if _err != nil{
+		if _err != nil {
 			fmt.Errorf("Error in DataManager readByte: %s\n", _err)
 			break
 		}
 
-		value :=  _data.Value.(byte)
+		value := _data.Value.(byte)
 
 		if value == 0 {
 			break
@@ -170,7 +169,7 @@ func (dm *dataManager) readString(address uint) (data Data, err ProcessException
 }
 
 //Specific method for read an int.
-func (dm *dataManager) readInt(address uint) (data Data, err ProcessException)   {
+func (dm *dataManager) readInt(address uint) (data Data, err ProcessException) {
 	data.DataType = INT
 
 	_data, err := dm.process.ReadBytes(address, 4)
@@ -179,7 +178,7 @@ func (dm *dataManager) readInt(address uint) (data Data, err ProcessException)  
 }
 
 //Specific method for read an uint.
-func (dm *dataManager) readUint(address uint) (data Data, err ProcessException)   {
+func (dm *dataManager) readUint(address uint) (data Data, err ProcessException) {
 	data.DataType = UINT
 
 	_data, err := dm.process.ReadBytes(address, 4)
@@ -192,7 +191,7 @@ func (dm *dataManager) readUint(address uint) (data Data, err ProcessException) 
 //Param	  (address) : The process memory addres in hexadecimal. EX: (0X0057F0F0).
 //Param   (data)    : The data to write.
 //Errors  (err)	    : This will be not nil if handle is not opened or the type is invalid.
-func (dm *dataManager) Write(address uint, data Data) (err DataException){
+func (dm *dataManager) Write(address uint, data Data) (err DataException) {
 	_err := error(nil)
 
 	if !dm.IsOpen {
@@ -201,16 +200,16 @@ func (dm *dataManager) Write(address uint, data Data) (err DataException){
 	}
 
 	switch data.DataType {
-		case UINT:
-			_err = dm.writeUint(address, uint(data.Value.(int)))
-		case INT:
-			_err = dm.writeInt(address, data.Value.(int))
-		case BYTE:
-			_err = dm.writeByte(address, byte(data.Value.(int)))
-		case STRING:
-			_err = dm.writeString(address, data.Value.(string))
-		default:
-			err = errors.New("Invalid data type.")
+	case UINT:
+		_err = dm.writeUint(address, uint(data.Value.(int)))
+	case INT:
+		_err = dm.writeInt(address, data.Value.(int))
+	case BYTE:
+		_err = dm.writeByte(address, byte(data.Value.(int)))
+	case STRING:
+		_err = dm.writeString(address, data.Value.(string))
+	default:
+		err = errors.New("Invalid data type.")
 	}
 
 	if _err != nil {
@@ -239,7 +238,7 @@ func (dm *dataManager) writeString(address uint, str string) (err ProcessExcepti
 }
 
 //Specific method for write an int.
-func (dm *dataManager) writeInt(address uint, i int) (err ProcessException)   {
+func (dm *dataManager) writeInt(address uint, i int) (err ProcessException) {
 	data := make([]byte, 4)
 	binary.LittleEndian.PutUint32(data, uint32(i))
 
@@ -249,7 +248,7 @@ func (dm *dataManager) writeInt(address uint, i int) (err ProcessException)   {
 }
 
 //Specific method for write an uint.
-func (dm *dataManager) writeUint(address uint, u uint) (err ProcessException)   {
+func (dm *dataManager) writeUint(address uint, u uint) (err ProcessException) {
 	data := make([]byte, 4)
 	binary.LittleEndian.PutUint32(data, uint32(u))
 

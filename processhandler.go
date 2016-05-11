@@ -23,10 +23,10 @@
 package goxymemmory
 
 import (
-	"unsafe"
-	"fmt"
 	"errors"
+	"fmt"
 	"github.com/Xustyx/w32"
+	"unsafe"
 )
 
 //Exception type of ProcessHandler.
@@ -35,12 +35,12 @@ type ProcessException error
 //Type of simple process.
 type Process struct {
 	Name string
-	Pid uint32
+	Pid  uint32
 }
 
 //This type handles the process.
 type processHandler struct {
-	process *Process
+	process  *Process
 	hProcess uintptr
 }
 
@@ -48,7 +48,7 @@ type processHandler struct {
 //Param	  (processName)	   : The name of process to handle.
 //Returns (*processHandler): A processHandler object.
 //Errors  (err)		   : Error if don't exist process with passed name.
-func ProcessHandler(processName string) (hProcess *processHandler, err ProcessException)  {
+func ProcessHandler(processName string) (hProcess *processHandler, err ProcessException) {
 	_hProcess := processHandler{}
 	_hProcess.process, err = processFromName(processName)
 
@@ -57,7 +57,7 @@ func ProcessHandler(processName string) (hProcess *processHandler, err ProcessEx
 
 //This function returns a list of process.
 func list() (processes []*Process) {
-	processes = make([]*Process,0)
+	processes = make([]*Process, 0)
 
 	handle := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, 0)
 	if handle == 0 {
@@ -73,7 +73,7 @@ func list() (processes []*Process) {
 	if _err == nil {
 		for {
 			name := w32.UTF16PtrToString(&pEntry.ExeFile[0])
-			processes = append(processes, &Process{ name,  pEntry.ProcessID})
+			processes = append(processes, &Process{name, pEntry.ProcessID})
 			_err = w32.Process32Next(handle, &pEntry)
 			if _err != nil {
 				break
@@ -89,10 +89,10 @@ func list() (processes []*Process) {
 }
 
 //This function search a process with passed name in list() and returns it.
-func processFromName(processName string) ( *Process, ProcessException) {
-	for _,process := range list() {
+func processFromName(processName string) (*Process, ProcessException) {
+	for _, process := range list() {
 		if process.Name == processName {
-			return  process, nil
+			return process, nil
 		}
 	}
 
@@ -131,7 +131,7 @@ func setDebugPrivilege() bool {
 	}
 
 	hToken := w32.HANDLE(0)
-	if !w32.OpenProcessToken(w32.HANDLE(pseudoHandle),  w32.TOKEN_ADJUST_PRIVILEGES | w32.TOKEN_QUERY, &hToken) {
+	if !w32.OpenProcessToken(w32.HANDLE(pseudoHandle), w32.TOKEN_ADJUST_PRIVILEGES|w32.TOKEN_QUERY, &hToken) {
 		fmt.Printf("Warning, GetCurrentProcess failed.")
 		return false
 	}
@@ -140,7 +140,7 @@ func setDebugPrivilege() bool {
 }
 
 //This function try to set privileges to a process.
-func setPrivilege (hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool) bool {
+func setPrivilege(hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool) bool {
 	tPrivs := w32.TOKEN_PRIVILEGES{}
 	TOKEN_PRIVILEGES_SIZE := uint32(unsafe.Sizeof(tPrivs))
 	luid := w32.LUID{}
@@ -159,7 +159,7 @@ func setPrivilege (hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege boo
 		tPrivs.Privileges[0].Attributes = 0
 	}
 
-	if !w32.AdjustTokenPrivileges(hToken, 0, &tPrivs, TOKEN_PRIVILEGES_SIZE, nil, nil){
+	if !w32.AdjustTokenPrivileges(hToken, 0, &tPrivs, TOKEN_PRIVILEGES_SIZE, nil, nil) {
 		fmt.Printf("Warning, AdjustTokenPrivileges failed.")
 		return false
 	}
