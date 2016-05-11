@@ -38,7 +38,7 @@ func main() {
 			fmt.Printf("Failed reading memory. %s", err)
 		}
 		fmt.Println("BYTE: ", data)					//Print the value.
-		
+
 		//(READ/WRITE) Int example.
 		err = dm.Write(0X0057F0F4,
 			goxymemmory.Data{-1, goxymemmory.INT})			//Write an int.

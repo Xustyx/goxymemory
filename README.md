@@ -9,7 +9,7 @@ class like the [example][git-goxymemory-example-url] below.
 
 ```
 $> go get github.com/Xustyx/goxymemory
-$> go get github.com/Xustyx/goxymemory
+$> go install github.com/Xustyx/goxymemory
 ```
 
 ```go
