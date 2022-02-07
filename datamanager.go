@@ -29,6 +29,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 )
 
 //Type of the data.
@@ -40,6 +41,7 @@ const (
 	INT
 	BYTE
 	STRING
+	FLOAT
 )
 
 //String representation of data types.
@@ -48,6 +50,7 @@ var data_types = [...]string{
 	"int",
 	"byte",
 	"string",
+	"float",
 }
 
 //Get the string value from enum value.
@@ -131,6 +134,11 @@ func (dm *dataManager) Read(address uint, dataType DataType) (data Data, err Dat
 }
 
 //Specific method for read a byte.
+func (dm *dataManager) GetModuleFromName(module string) (address uintptr, err ProcessException) {
+	return dm.process.GetModuleFromName(module)
+}
+
+//Specific method for read a byte.
 func (dm *dataManager) readByte(address uint) (data Data, err ProcessException) {
 	data.DataType = BYTE
 
@@ -208,6 +216,8 @@ func (dm *dataManager) Write(address uint, data Data) (err DataException) {
 		_err = dm.writeByte(address, byte(data.Value.(int)))
 	case STRING:
 		_err = dm.writeString(address, data.Value.(string))
+	case FLOAT:
+		_err = dm.writeFloat(address, data.Value.(float32))
 	default:
 		err = errors.New("Invalid data type.")
 	}
@@ -252,6 +262,14 @@ func (dm *dataManager) writeUint(address uint, u uint) (err ProcessException) {
 	data := make([]byte, 4)
 	binary.LittleEndian.PutUint32(data, uint32(u))
 
+	err = dm.process.WriteBytes(address, data)
+
+	return
+}
+
+func (dm *dataManager) writeFloat(address uint, f float32) (err ProcessException) {
+	data := make([]byte, 4)
+	binary.LittleEndian.PutUint32(data[:], math.Float32bits(f))
 	err = dm.process.WriteBytes(address, data)
 
 	return

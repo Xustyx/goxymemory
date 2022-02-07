@@ -167,6 +167,27 @@ func setPrivilege(hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool
 	return true
 }
 
+//This function search a module inside process.
+func (ph *processHandler) GetModuleFromName(module string) (uintptr, error) {
+	var (
+		me32 w32.MODULEENTRY32
+		snap w32.HANDLE
+	)
+
+	snap = w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE|w32.TH32CS_SNAPMODULE32, ph.process.Pid)
+	me32.Size = uint32(unsafe.Sizeof(me32))
+
+	for ok := w32.Module32First(snap, &me32); ok; ok = w32.Module32Next(snap, &me32) {
+		szModule := w32.UTF16PtrToString(&me32.SzModule[0])
+
+		if szModule == module {
+			return (uintptr)(unsafe.Pointer(me32.ModBaseAddr)), nil
+		}
+	}
+
+	return (uintptr)(unsafe.Pointer(me32.ModBaseAddr)), errors.New("module not found")
+}
+
 //Low level facade to Read memory.
 //Public method of (processHandler) class.
 //Param	  (address): The process memory addres in hexadecimal. EX: (0X0057F0F0).
