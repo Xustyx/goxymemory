@@ -86,7 +86,7 @@ fmt.Println("UINT: ", data)					            //Print the value.
   * address: Memory address in hexadecimal format.
   * data: Struct that contains the data to add and the enum value of desired Type.
 
-#Disclaimer
+# Disclaimer
 The author can not be held liable for any use of this code.
 
 [git-goxymemory-example-url]: <https://github.com/Xustyx/goxymemory/tree/master/example>
